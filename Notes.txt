@@ -1,0 +1,87 @@
+These will be general notes i take for ai stuff especially useful functions n shit to use during the events.
+
+Pandas:
+.read_csv -> self explanatory
+.info() -> gives general info about the set
+.head() -> to have the first rows of the data
+.describe() -> gives more detailled info as a summary about the columns for example mean and median and std etc.
+.corr() -> gives the correlation matrix between every feature where the closer it is to 1 the more correlated the value are (closer to 1 values grow up the same closer to -1 values go different ways the same)
+
+from pandas.plotting import scatter_matrix(dataframe, *other usual plot args*) -> this is a shit ton of graphs that talk about correlation (recommended to use for features that have promising correlation with the target)
+
+MatPlotLib:
+adding the graph name on a pandas dataframe usually works
+.hist -> main parameter is bins(number of bars) and fig_size(general in almost every graph for the size)
+
+ScikitLearn (sklearn):
+from sklearn.model_selection import train_test_split(dataframe, test_size=0.2 (ratio of test), (addtitional strat you could add:stratify=housing["income_cat"]), random_state=42 (seed))
+from sklearn.Imputer import SimpleImputer -> generally used for imputing Na values in your dataframe, parameters: strategy["mean","most_frequent",("constant", (additional parameter) fill_value=...)] NOTE: the imputer returns a numpy array on transform NOT a dataframe
+from sklearn.preprocessing import OrdinalEncoder -> just gives text categories numbers
+from sklearn.preprocessing import OneHotEncoder -> separates features into 0 and 1 table called dummies just look it up cuh (also you can use pd.get_dummies which does the same thing)
+from sklearn.preprocessing import MinMaxScaler(feature_range(-1,1)) -> scaler to get values between the range
+from sklearn.preprocessing import StandardScaler -> different calculation that uses the standard deviation to not get anomalies to squish the values in minmax scaler
+from sklearn.metrics.pairwise import rbf_kernel -> THIS FUNCTION NEEDS A LOT OF TALKING but in a nutshell it gives you a correlation between the distance of a value and the feature. useful in numerical values to know what numbers to pick for clustering later.
+.inverse_transform() -> availlable in some models that allow for the label or target to be "unscaled" after scaling them for whatever reason it may be (distribution was winged for the target)
+from` sklearn.preprocessing import FunctionTransformer -> useful for creating new custom transformers for your data. advanced topic for now as in Chapter 2. Study it later by yourself through scikit learn docs duh.
+from sklearn.pipeline import Pipeline -> used to do everything at once and takes as input a tuple of a string name and a transformer
+from sklearn.pipeline import make_pipeline -> if you are lazy to name just use this and add your transformers
+from sklearn.compose import ColumnTransformer -> used to separate columns for specific steps of the pipeline steps. useful for separating tasks and takes as input a tuple(name, pipeline, feature names)
+from sklearn.compose import make_column_selector, make_column_transformer -> too lazy to name column transformer, and the selector is also for the lazy people who dont want to declare the labels of the features of each pipe, make column selector has as an argument the type needed.
+from sklearn.multiclass import OneVsRestClassifier -> forces a binary alg to use OvR strat takes as input the model or pipe
+from sklearn.multiclass import OneVsOneClassifier -> forces a binary alg to use OvO strat takes as input the model or pipe
+from sklearn.multioutput import ClassifierChain -> estimator for the chain classification strat for the multioutput strat, look at the docs ig.
+
+from sklearn.metrics import root_mean_squared_error -> RMSE used for calculating performance of a regression model (could also user mean_squared_error) input (predictions, target)
+from sklearn.metrics import accuracy_score -> acc score takes test then predicted
+from sklearn.metrics import confusion_matrix -> lots of yap about this will dedicate an entire section for it. takes the Y_test and Y_predicted as output
+from sklearn.metrics import ConfusionMatrixDisplay ->  fancy way to plot the confusion matrix same input as 
+from sklearn.metrics import precision_score, recall_score, f1_score -> gets the scores related to the confusion matrix. and takes as input (test, predictions)
+from sklearn.metrics import precision_recall_curve -> just prepares data to draw the precision recall curve as a plot and see their relation. takes (test, predictions) and returns 3 values: precisions, recalls, thresholds
+from sklearn.metrics import roc_curve -> receiver operating characteristic, similar to precision recall curve but insted gives out fpr (false positive rate) and tpr (true positive rate), takes as input (test, predictions) and returns fpr, tpr, thresholds
+from sklearn.model_selection import cross_val_score -> just look it up bruh input (model, train, test, scroring="(look for docs)", cv=splits)
+from sklearn.metrics import roc_auc_score -> calculates the surface under and takes as input (test, predictions)
+from sklearn.model_selection import cross_val_predict -> same as cross_val_score but instead returns the predictions too for all values (doesnt take a scoring arg)
+from sklearn.model_selection import GridSearchCV -> will do cross evalutaion while trying out all the possible combinations of hyperparameters you feed it input (model/pipeline, param_grid, cv=splits, scoring="you decide")
+from sklearn.model_selection import RandomGridSearchCV -> same shit but can be faster with gamba technique (also HalvingRandomGridSearchCv is a thing too)
+
+MODELS:
+from sklearn.linear_model import LinearRegression -> make line
+from sklearn.tree import DecisionTreeRegressor -> make decision
+from sklearn.ensemble import RandomForestRegressor -> make bunch of decisions
+
+
+
+NOTES IN GENERAL:
+in supervised learning especially with regression the process of making an efficent model is:
+look at the data offered and pick the best data to use.
+split your shit indeed.
+preprocess the data by finding patterns and correlations to know which one to pick.
+try to get the stuff into bell shapes or some shit idk.
+classified data turns into dummies if there are few.
+impute any null values if few else just get rid of them entirely.
+scale the values to be around 0-1 or -1 1 depending on the model your using.
+test multiple models on the train set and validation set to see if any perform good and dont overfit(perform too well on the train data and not very well on the validation data use more complex model) or underfit(just shit numbers use less complex number or get more features) also use cross evaluation dummy
+find the best hyperparameters with GridSearchCV or any of the techniques
+to evaluate the model you may either use RMSE or MSE (RMSE can guess the overall performance without focus on the outliers much compared to the MSE)
+
+in supervised learning this time for classification:
+to rate a model's evaluation we can either rely on accuracy (predicted/test) but that generally isnt the best way to describe how well a model does especially in skewed datasets
+the confusion mastrix is used in binary classification (either one thing or the other) and shows 4 informations
+[TN,FP] 
+[FN,TP]
+TN -> true negatives is the number of 0s the model guessed correctly
+TP -> true positives is the number of 1s the model guessed correctly
+FP -> false positives is the number of 0s the model gussed as 1
+FN -> false negatives is the number of 1s the model gussed as 0
+from this matrix we can deduce the following information for better information about its performance
+TP/(TP+FP) is called precision: the ratio of which the model correctly got the number's 1. this metric is mostly useful if you want your model to give the least amount of wrong guesses at the price of less values gussed (model is more strict)
+TP/(TP+FN) is called recall or true positive rate: the ratio of which the model got the most amount of 1s. this metric is mostly useful if you want your model to give the most amount of 1s regardless of how many 0s guessed. (model just targets anything that looks a bit like the 1)
+(preicision*recall)/(precision + recall) is called the F1 score (harmonic mean), this score is more impartial and a better metric to use to rate how well your model made guesses as it gives more weight to the low values. this metric is mostly useful if you want the best balance of precision and recall in your classifiers. 
+FP/(FP+TN) is called false positive rate FPR or 1 - specificity useful or also fall out to get the ratio of correct guesses the model made among all the 1s.
+in the receiver operating characteristic ROC curve which is a curve simmilar to the precision recall curve. it takes this time instead recall or TPR and FPR as a plot and draws a curve which shows the models overall performance for which the closer it is to the corner the better the perforamnce of the model.
+another way to get more precise information about the performance is to calculate the area beneat the roc curve called auc or area under curve where the closer it is to 1 the better it is. 
+
+multiclass classification: when you want the predictions to be more than 2 values (binary classification) in this case you may rely on 2 strategies, OvR (one versus rest) or OvA (one versus all) which is a strategy which includes training multiple binary models for each class and mark the other one as the "rest" and then the predictions will be done by making those models compete and the model with the most confidence will decide the prediction
+another strategy is OvO (one versus) meaning you put every binary classifier in duels and the winner of the tournament (literally) decided the prediction, it sounds dumb but it works.
+multilabel classification: when the output should include multiple outputs that are binary, for example in face recognition you want an output that has every face it can recognize on the image and output those multiple faces instead of 1 output. a strat for this is chaining classifiers from one to another meaning a classifier guesses the first label and is followed by another one later to guess with the data + 1st classifier prediction
+multioutput classification: when the output is multilabel and multiclass meaning a mix of multiclass and multioutput (multilabel) classification. 

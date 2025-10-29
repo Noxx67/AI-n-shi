@@ -1,0 +1,4 @@
+*.pkl
+*.csv
+*datasets/*
+*images/*
