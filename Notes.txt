@@ -43,18 +43,13 @@ from sklearn.metrics import roc_auc_score -> calculates the surface under and ta
 from sklearn.model_selection import cross_val_predict -> same as cross_val_score but instead returns the predictions too for all values (doesnt take a scoring arg)
 from sklearn.model_selection import GridSearchCV -> will do cross evalutaion while trying out all the possible combinations of hyperparameters you feed it input (model/pipeline, param_grid, cv=splits, scoring="you decide")
 from sklearn.model_selection import RandomGridSearchCV -> same shit but can be faster with gamba technique (also HalvingRandomGridSearchCv is a thing too)
-
-MODELS:
-from sklearn.linear_model import LinearRegression -> make line
-from sklearn.tree import DecisionTreeRegressor -> make decision
-from sklearn.ensemble import RandomForestRegressor -> make bunch of decisions
-
+from sklearn.metrics import make_scorer -> can be very useful when working with a model that requires a unique score or cost function like pAUC
 
 
 NOTES IN GENERAL:
 in supervised learning especially with regression the process of making an efficent model is:
 look at the data offered and pick the best data to use.
-split your shit indeed.
+split your shit indeed. (NOTE: any transformation applied on the train data should be applied to the test data)
 preprocess the data by finding patterns and correlations to know which one to pick.
 try to get the stuff into bell shapes or some shit idk.
 classified data turns into dummies if there are few.
@@ -85,3 +80,257 @@ multiclass classification: when you want the predictions to be more than 2 value
 another strategy is OvO (one versus) meaning you put every binary classifier in duels and the winner of the tournament (literally) decided the prediction, it sounds dumb but it works.
 multilabel classification: when the output should include multiple outputs that are binary, for example in face recognition you want an output that has every face it can recognize on the image and output those multiple faces instead of 1 output. a strat for this is chaining classifiers from one to another meaning a classifier guesses the first label and is followed by another one later to guess with the data + 1st classifier prediction
 multioutput classification: when the output is multilabel and multiclass meaning a mix of multiclass and multioutput (multilabel) classification. 
+
+Chapter 4:
+
+From Chapter 4 and going on every talk will be about models their hyperparameters and their general use cases
+
+> Linear Regression:
+
+from sklearn.linear_model import LinearRegression
+
+y = Θ*x
+Θ: parameters
+x: feature values
+
+self explanatory, just draws a line that averages the features.
+
+the model is trained through the normal equation that finds the lowest parameter value Θ for the cost function which could be the MSE or RMSE
+
+> Gradient Decent:
+
+Technique that through the cost function uses steps to converge to the local minimum of a cost function, starting with a random value Θ 
+Gradient Decent hyperparameters are as follows:
+max_iter -> the maximum iterations or steps the model should stop at
+tol -> tolerance or when the model should stop if the improvement is less than the tol
+eta0 -> learning rate or how wide the steps the model takes
+loss -> cost function or loss function the gradient uses to train on 
+penalty -> regularization techniques (refer to Ridge and Lasso)
+
+to compute the gradient decent's next step you need the derivative of the loss function
+
+the formula looks something like this Θ(next step) = Θ - learning_rate(or eta0)*MSE'(Θ)
+
+to implement them with sklearn you will need to 
+import sklearn.linear_model import SGDClassifier or SGDRegressor
+
+> Polynomial Regression:
+
+in case your data follows a certain polynomial pattern + Noise you have the ability to use polynomial regression to train linear models on such features
+through importing 
+from sklearn.preprocessing import PolynomialFeatures
+the parameters of the PolynomialFeattures class is degree for the polynomial degree you believe the data should follow and include_bias and includ_interactions for the interaction between the features (x1*x2 and x1*x3 and so on) and their bias(where the degree is 0 as in x1^0)
+training a linear model on a new dataset that went through polynomialfeatures makes it possible to get predictions that are polynomial and not linear
+
+> Regularized LinearRegression models:
+
+in most cases it is always better to use regularized models to dodge the case of overfitting your model. this is done by adding a regularization term to the cost function to limit the model from shooting for parameters way too high for what they need to be
+for this 2 models are availlable:
+
+Ridge:
+from sklearn.linear_model import Ridge
+with the hyper parameter of alpha (between 0 and 1) controlling how regularized the model should be. as alpha goes higher the parameters end up being more grounded and closer to 0
+
+J(Θ) = MSE(Θ) + (alpha/m)*sum(Θ^2) (J being the cost function and sum being the total of every parameter squared)
+
+this regluarization term is also called the l2 norm
+
+Lasso:
+from sklearn.linear_model import Lasso
+almost similar to the Ridge function with the new regularization term being l1 norm instead of l2:
+J(Θ) = MSE(Θ) + 2*alpha*sum(Θ)
+Lasso model tends to eliminate weights of the least important features so it automatically performs feature selection
+
+ElasticNet:
+from sklearn.linear_model import ElasticNet
+middle ground between Ridge and Lasso with a parameter l1_ratio that determines who takes more importance between the l2 norm and l1 norm:
+J(Θ) = MSE(Θ) + (r)2*alpha*sum(Θ) + (1-r)(alpha/m)*sum(Θ^2)
+
+to know which model to pick it is generally better to use ridge but at any suspiscion of having useless features it is better to use ElasticNet or Lasso
+
+> Logistic Regression:
+
+Model that gives the probabilty of the value instead of the normal output of a linear model through a sigmoind function giving out an S shape instead of a line and the output becoming a probability
+
+p = Sig(Θ.T * X) with Sig(t) = (1+exp(-t))^-1
+the result p is then put through the step function h where
+y = h(x) = {x >= 0.5 -> 1 | x < 0.5 -> 0}
+
+the cost function is the negative log of the probabilites dependant of the target y = 1 or 0
+or in a better way written as:
+J(Θ) = -(1/m)*sum(y*log(p) + (1-y)*log(1-p))
+to use the logistic regression model
+from sklearn.linear_model import LinearRegression
+the hyperparameters:
+penalty -> the regularization term used
+C -> regularization strength inverse higher means less regularized
+
+the softmax regression is automatically used when the model is trained on multi class output 
+
+NOTES: 
+since early stopping is simply a concept ill leave it here in the notes section of the chapter, this technique is reliant on training the model partially and note the scores of the model through out the training process and in the case of 
+seeing the score go down then up it is recommend to stop the trainnig at that point instead of overfitting the model, this can be done through using the function of the models in partial_fit() of the models which allows you to train the model over the already trained parameters
+
+
+Chapter 5:
+
+SVM or support vector machines are models that are able to do linearn and non linear classification and regression.
+
+> Linear SVM Classification:
+
+how classification works in SVM is through calculating a boundary(class separation) and streets(outliers separation or anything that shouldnt be of both classes) that separate the data into 2 classes.
+
+from sklearn.svm import linearSVC or SVR for regressions
+with the hyperparameter 
+C -> determining the street size as C gets larger the streets gets narrower
+probabilty -> if set to True returns the probabilites of the functions and allows the use of predict_proba()
+
+
+SVM's can be useful in the case of separating data that is not linear through the use of polynomial regression to help the model train on non linear datasets
+
+kernels are very also depending on the classification task and the dataset shape. RBF kernel can help for non linearly separable solutions and Poly kernel each of them have their own hyperparameters
+
+Chapter 6:
+
+> Decision Trees
+
+decision trees are in the simplest terms an if else nest hell. the tree will take a random feature and divide the features into boundaries then compare the features in its nodes until reaching the leaves which decided what the output will be.
+each node of the tree has a gini impurity value which describes the difference of training instances that belong to either child of leaves. with gini=0 meaning the node is pure and every instance belongs to the class
+the gini impurity value could be witched to Entropy which is a measure of uncertainity similar to gini impurity where the lower the entropy is the purer the node is. there isnt a huge difference between both an gini is faster to compute so its recommended to stick with gini.
+
+form sklearn.tree import DecisionTreeRegressor | DecisionTreeClassifier
+the hyperparameters:
+max_depth = the layers the tree can have as a max number
+max_features = max features evaluated in each split
+max_leaf_nodes = max leaf number
+min_samples_split = required samples needed in the node to split
+min_samples_leaf = required number for a leaf to be created
+min_weight_fraction_leaf = same as min_samples_leaf but as a fraction instead of the total number
+criterion = (for regression) the criteria or the cost funtion of each node that needs to be minimized
+
+increasing min parameters and decreasing max parameters can regularize the model.
+Regression is calculated in the decision tree through splitting the data with value boundaries for each feature then calculating the minimal arg for the cost function which is usually mse
+
+NOTE:
+decision trees are sensitive to data position if the data was to be clustered it is recommended to rotate it in a way so that the tree could make the least amount of splits possible to classify the data
+
+Chapter 7:
+
+Ensembles are a collection of models that make multiple predictions and through a voting classifier can get the needed prediction. generally ensembles are better than a single model alone.
+the classes that can be used to work with multiple models is a Voting Classifier in sklearn
+imported through:
+from sklearn.enseble import VotingClassifier (look at the docs idiot)
+
+Traning multiple models at the same can be very costy so we refer to 2 sampling techniques called Bagging and Pasting which just take a random sample of values from the dataset.
+the difference between bagging and pasting is that bagging can allow to have repeating samples and pasting does not allow that
+these can be imported as
+from sklearn.ensemble import BaggingClassifier
+the hyper parameters:
+estimator -> the model 
+n_estimators -> number of models
+max_samples -> number of samples to get from the training set
+max_features -> number of features to pick from the training set
+boottrap -> if samples are drawn with replacement (pasting)
+oob_score -> if you want out of bag to be applied for evaluation 
+
+because of this random sampling process the data is not fully used to train the ensemble most of the time there is a certain ratio of that data that is never trained which is about 37%
+these 37% of data can be used to evaluate the model and this technique is called OOB or out of bag evaluation. to get the score just call oob_score_ after fitting the model
+
+> Random Forests:
+from sklearn.ensemble import RandomForestClassifier | RandomForestRegressor
+has all the hyperparameters of a decisiontree with the additional parameter of n_estimators -> number of models
+
+> ExtraTrees:
+from sklearn.ensemble import ExtraTreesClassifier | ExtraTreesRegressor
+similar to the random forests however the way the data is split here is more random which allows for more variance and less bias, the hyperparameters are the same
+
+Forests are very useful to know how important some of the features are through calling the value of feature_importances_ after training
+
+> Boosting:
+a technique where you take weak learners and train them to become one independant strong learner meaning from multiple eh performing models to an ensemble of a robust one
+> AdaBoosting:
+a technique where data is fit to a weak learner then the result turns into weights then feeds the new weights into a new model and so on
+from sklearn.ensemble import AdaBoostClassifier | AdaBoostRegressor
+hyperparameters:
+estimator -> the model
+n_estimator -> number
+learning_rate -> you just know
+
+> GradientBoosting:
+same as ADA but feeds the residual errors instead of the new weights to the next models.
+from sklearn.ensemble import GradientBoostingClassifier
+this one doesnt have an estimator as it automatically uses trees.
+loss -> the loss functions
+learning_rate
+n_estimators
+has about the same parameters as the forest classifier
+for very large datasets use HistGradientBoosting which allows to separate the data into bins and train separately
+
+> Stacking:
+the technique of feeding the output of multiple model's outputs into another model type shit.
+from sklearn.ensemble import StackingClassifier
+which takes as parameters a dict of estimators an a final_estimator
+
+Chapter 8:
+Dimensionality reduction is used to simplify the data and help with data visualization this can mean the projection of n features into a m number of features with m < n and some info loss.
+the main technique used for this is to imagine it as projecting the data into a lower dimension plane for example a 3d plane into 2d and a 2d plane into a line etc. we want the data to be reduced in a way the variance is kept at its highest.
+> PCA:
+calculates the vectors at which the variance of data is highest and lowest and projects it into the lower plane through these new vectors.
+from sklearn.decomposition import PCA
+parameters:
+n_components -> number of features or dimensions to leave
+svd_solver -> method used to calculate the PCA
+we can calculate the information loss through 1 - the total of explained_variance_ratio_ accessible in the class after fitting
+
+>Random Projection:
+it is said that when we have very high dimensionality randomly removing one of the dimensions and projecting them on a lower plane will not lose as much data as you might think.
+from sklearn.random_projection import johnson_lindenstrauss_min_dim
+n_samples = the number of instances there are
+eps = the data you wanna lose
+and with 
+from sklearn.random_projection import GaussianRandomProjection
+n_components -> dimensions you want
+eps -> data loss
+
+>LLE:
+doesnt rely on projections but looks for linearly similar features and treis to find a low dimensional representation of it. very useful whent there are twisted patterns in the dataset like rolls.
+from sklearn.manifold import LocallyLinearEmbedding
+n_neightbors -> number of values that are close to the feature to consider to reduce
+n_components -> the number of features you want
+
+Chapter 9:
+unsupervised learning is used for many tasks that are related most of the time to finding patterns in the dataset you use. mainly clustering anomaly detection and density estimation.
+to cluster your data you can use 
+> KMeans
+from sklearn.cluster import KMeans (can import MiniBatchKmeans or look for a better algorithm for accelerated learning n shi)
+n_clusters -> number of clusters
+max_iter -> iterations the model will stop at if no improvement is seen
+tol -> tolerance at which if the closters move less than it will stop the model 
+n_init -> if set to 1 can include the cluster's centriod positions
+SCORING IN UNSUPERVISED:
+generally there isnt a good way to score in unsurpervised learning.
+for scoring we can either refer to inertia found in a clustering model's values wich tells you how spread apart the instances are compared to the clusters
+to find the best number of clusters if we dont know what it is we can either use dimensionality reduction to try and visualize the date or calculate the inertia the lower it is the better but usually not the best metric
+silhouette_score() imported through sklearn_metrics which gives out the mean of how well a data fits the clusters and a better alternative to calculate the best cluster number for kmeans clusters
+the best way to pick a cluster  number however is through a silhouette diagram and picking the most balanced values in terms of score and cluster density
+k means is usually good for round same sized blobs of data to detect however it doesnt perform well in weirdly shaped data forms like moons.
+
+k means can be good for semi supervised tasks as it can get the most relevant instances of a data in clusters and labelling them and training a model on them could allow you to easily bump up the accuracy when having very low number of instances
+
+> DBSCAN:
+a better clustering algorithm used to find shapes that are not blobs however this idiot cant fit and predict for shit.
+from sklearn.cluster import DBSCAN
+eps -> minimum distance for an instance to be a part of a cluster
+min_samples -> number of samples required for an instance to be called a core instance meaning for other instances to look at it as a cluster neighbor
+
+> Gaussian Mixture
+this model assumers that the dataset was generated through gaussian distributions mixed together and tries to cluster the data accoding to that. very useful if the data has shapes of waves or elipses.
+from sklearn.mixture import GaussianMixture
+n_components -> number of mixtures
+covariance_type -> shape of the gaussian mixtures can be used for regularization
+this alg can be used for anomaly detection where the further an instance is from a certain threshold it gets classified as an anomaly
+to select the number of clusted we can rely on the AIC and BIC criterion. they result in similar models most of the time, BIC tends to give simpler models than AIC but doesnt fit large data as well AIC
+both can be found in the class by calling .aic(data) or .bic(data) the lower they are the better
+you could alternatively use Bayesian Gaussian Mixture Models
+from sklearn.mixture import BayesianGaussianMixture
+which automatically tries to find the best number of clusters needed for the data

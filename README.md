@@ -1,1 +1,2 @@
 Saving my progress in the book hands on machine learning with scikit-learn, keras & tensorflow by Aurelien Geron.
+Check out Notes.txt for a brief description of the main functions i used form the libraries and the notes i took on the process of analysing and cleaning data and training a model
