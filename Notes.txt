@@ -43,6 +43,7 @@ from sklearn.metrics import roc_auc_score -> calculates the surface under and ta
 from sklearn.model_selection import cross_val_predict -> same as cross_val_score but instead returns the predictions too for all values (doesnt take a scoring arg)
 from sklearn.model_selection import GridSearchCV -> will do cross evalutaion while trying out all the possible combinations of hyperparameters you feed it input (model/pipeline, param_grid, cv=splits, scoring="you decide")
 from sklearn.model_selection import RandomGridSearchCV -> same shit but can be faster with gamba technique (also HalvingRandomGridSearchCv is a thing too)
+from sklearn.model_selection import ShuffleSplit -> shuffles the data for n number and returns arrays of the training and test indexes.
 from sklearn.metrics import make_scorer -> can be very useful when working with a model that requires a unique score or cost function like pAUC
 
 
@@ -185,7 +186,7 @@ with the hyperparameter
 C -> determining the street size as C gets larger the streets gets narrower
 probabilty -> if set to True returns the probabilites of the functions and allows the use of predict_proba()
 
-
+you can also use the decision_function() metod of the svm classes to get the confidence score which is the distance of the instance from the boundary
 SVM's can be useful in the case of separating data that is not linear through the use of polynomial regression to help the model train on non linear datasets
 
 kernels are very also depending on the classification task and the dataset shape. RBF kernel can help for non linearly separable solutions and Poly kernel each of them have their own hyperparameters
