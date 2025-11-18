@@ -274,7 +274,9 @@ which takes as parameters a dict of estimators an a final_estimator
 
 Chapter 8:
 Dimensionality reduction is used to simplify the data and help with data visualization this can mean the projection of n features into a m number of features with m < n and some info loss.
-the main technique used for this is to imagine it as projecting the data into a lower dimension plane for example a 3d plane into 2d and a 2d plane into a line etc. we want the data to be reduced in a way the variance is kept at its highest.
+the main technique used for this is to imagine it as projecting the data into a lower dimension plane for example a 3d plane into 2d and a 2d plane into a line etc. 
+OR manifold learning which is trying to represent a higher dimensional shape into a lower one while trying to keep its shape for example a swiss roll data set to be unfolded in 2d.
+we want the data to be reduced in a way the variance is kept at its highest.
 > PCA:
 calculates the vectors at which the variance of data is highest and lowest and projects it into the lower plane through these new vectors.
 from sklearn.decomposition import PCA
